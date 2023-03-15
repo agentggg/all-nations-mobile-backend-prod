@@ -176,11 +176,14 @@ CACHES = {
 AUTH_USER_MODEL = "app_backend_api.CustomUser"  # new
 # # custom user model database for login
 
+import os
+import redis
 
-# Application definition
-CELERY_BROKER_URL = env("REDISCLOUD_URL")
-CELERY_RESULT_BACKEND = env("REDISCLOUD_URL")
-BROKER_URL = env("REDISCLOUD_URL")
+REDIS_HOST = env('REDIS_HOST')
+REDIS_PORT = env('REDIS_PORT')
+REDIS_PASSWORD = env('REDIS_PASSWORD')
+REDIS_URL = f'redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}'
+
 
 INTERNAL_IPS = [
     "127.0.0.1",

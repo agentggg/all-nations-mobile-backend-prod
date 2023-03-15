@@ -20,9 +20,9 @@ import cloudinary
 import cloudinary.uploader
 from imagekitio import ImageKit
 
-contact_admin = env("EMAIL_HOST_USER")
-email = env("EMAIL_HOST_USER")
-pas = env("EMAIL_HOST_PASSWORD")
+contact_admin = env("admin_contact")
+email = env("email")
+pas = env("pas")
 imagekit = ImageKit(
     private_key=("PRIVATE_KEY_IMAGE"),
     public_key=("PUBLIC_KEY_IMAGE"),
@@ -34,19 +34,21 @@ def createNewAccountSendEmailApproval(email_subject, email_message, email_host, 
     send_mail(email_subject, email_message, email_host, [email_recipient])  
     return("email task has been sent")
 
+        
 @shared_task
 def send_outreach_contact_text(frontendContactArrayType, frontendMessageTask, frontendUserId, frontEndOrg):
     confirmedMessagesSent = {}
     if len(frontendContactArrayType) == 1:
-        # checks if the array index count is 1... if it is more then 1, then it skips this section and then loops
+        # checks if the array index count is 1. if it is more then 1, then it skips this section and then loops
         frontendContact = ' '.join(frontendContactArrayType)
         # converts the frontendContactArrayType into a string to be accessible in the code as a string
         numberQuery = OutreachRegistrationForm.objects.filter(outreach_first_name=frontendContact).values_list('outreach_phone_number', flat=True).first()
         # retrieve phone number value from database in QuerySet format <QuerySet ['6786820502', '6786820502']>
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_="4704678410")
+        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_=TWILIO_ACCOUNT_PHONE)
         confirmedMessagesSent[frontendContact] = numberQuery
         # updates dictionary for text confirmation
     else:
@@ -56,8 +58,9 @@ def send_outreach_contact_text(frontendContactArrayType, frontendMessageTask, fr
         # retrieve phone number value from database in QuerySet format <QuerySet ['6786820502', '6786820502']>
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_="4704678410")
+        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_=TWILIO_ACCOUNT_PHONE)
         # confirmedMessagesSent.update({frontendContactItems : numberQuery})
         confirmedMessagesSent[frontendContactItems] = numberQuery
     user_email_from_database = CustomUser.objects.filter(id=frontendUserId).values_list('email', flat=False)
@@ -88,8 +91,10 @@ def send_contact_text(frontendContactArrayType, frontendMessageTask, frontendUse
         # retrieve phone number value from database in QuerySet format <QuerySet ['6786820502', '6786820502']>
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
+        print("==>> TWILIO_ACCOUNT_PHONE: ", TWILIO_ACCOUNT_PHONE)
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_="4704678410")
+        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_=TWILIO_ACCOUNT_PHONE)
         confirmedMessagesSent[frontendContact] = numberQuery
         # updates dictionary for text confirmation
     else:
@@ -99,16 +104,21 @@ def send_contact_text(frontendContactArrayType, frontendMessageTask, frontendUse
         # retrieve phone number value from database in QuerySet format <QuerySet ['6786820502', '6786820502']>
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_="4704678410")
+        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_=TWILIO_ACCOUNT_PHONE)
         # confirmedMessagesSent.update({frontendContactItems : numberQuery})
         confirmedMessagesSent[frontendContactItems] = numberQuery
     user_email_from_database = CustomUser.objects.filter(id=frontendUserId).values_list('email', flat=False)
     user_email_from_database_plain_text = json.dumps(list(user_email_from_database)[0][0]).replace('"','')
     confirmationEmail = (f"""The following users were sent the following message. Thank you for using Go All Nations:
+
 Recipients: {confirmedMessagesSent}
+
 Message that was sent: {frontendMessageTask}
+
 Jesus said to him, “Rise, take up your bed and walk.” 
+
 Evolving Technologies LLC
 """)
     # text message that will be sent
@@ -136,8 +146,9 @@ def send_category_text(frontendContactArrayType, frontendMessageTask, frontendUs
             # creates a dictionary of strings for confirmation email that will be sent
             TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
             TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+            TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
             client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-            client.messages.create(body=frontendMessageTask, to=[eachNumber], from_="4704678410")
+            client.messages.create(body=frontendMessageTask, to=[eachNumber], from_=TWILIO_ACCOUNT_PHONE)
             confirmedMessagesSent[nameQuery] = eachNumber
             # creates a dictionary of strings for confirmation email that will be sent
     else:
@@ -155,16 +166,21 @@ def send_category_text(frontendContactArrayType, frontendMessageTask, frontendUs
                 # creates a dictionary of strings for confirmation email that will be sent
                 TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
                 TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+                TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
                 client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-                client.messages.create(body=frontendMessageTask, to=[eachNumber], from_="4704678410")
+                client.messages.create(body=frontendMessageTask, to=[eachNumber], from_=TWILIO_ACCOUNT_PHONE)
                 confirmedMessagesSent[nameQuery] = eachNumber
                 # creates a dictionary of strings for confirmation email that will be sent
     user_email_from_database = CustomUser.objects.filter(id=frontendUserId).values_list('email', flat=False)
     user_email_from_database_plain_text = json.dumps(list(user_email_from_database)[0][0]).replace('"','')
     confirmationEmail = f"""The following users were sent the following message. Thank you for using Go All Nations:
+
 Recipients: {confirmedMessagesSent}
+
 Message that was sent: {frontendMessageTask}
+
 Jesus said to him, “Rise, take up your bed and walk.” 
+
 Evolving Technologies LLC
 """
 
@@ -185,16 +201,21 @@ def send_outreach_text(frontendContactArrayType, frontendMessageTask, frontendUs
         # stdout number for each name
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[eachNumber], from_="4704678410")
+        client.messages.create(body=frontendMessageTask, to=[eachNumber], from_=TWILIO_ACCOUNT_PHONE)
         confirmedMessagesSent[nameQuery] = eachNumber
         # creates a dictionary of strings for confirmation email that will be sent
     user_email_from_database = CustomUser.objects.filter(id=frontendUserId).values_list('email', flat=False)
     user_email_from_database_plain_text = json.dumps(list(user_email_from_database)[0][0]).replace('"','')
     confirmationEmail = (f"""The following users were sent the following message. Thank you for using Go All Nations:
+
 Recipients: {confirmedMessagesSent}
+
 Message that was sent: {frontendMessageTask}
+
 Jesus said to him, “Rise, take up your bed and walk.” 
+
 Evolving Technologies LLC
 """)
     # text message that will be sent
@@ -215,8 +236,9 @@ def send_contact_text_image(frontendContactArrayType, frontendMessageTask, front
         # retrieve phone number value from database in QuerySet format <QuerySet ['6786820502', '6786820502']>
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_="4704678410", media_url=[file])
+        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_=TWILIO_ACCOUNT_PHONE, media_url=[file])
         confirmedMessagesSent[frontendContact] = numberQuery
         # updates dictionary for text confirmation
     else:
@@ -226,8 +248,9 @@ def send_contact_text_image(frontendContactArrayType, frontendMessageTask, front
         # retrieve phone number value from database in QuerySet format <QuerySet ['6786820502', '6786820502']>
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_="4704678410", media_url=[file])
+        client.messages.create(body=frontendMessageTask, to=[numberQuery], from_=TWILIO_ACCOUNT_PHONE, media_url=[file])
         # confirmedMessagesSent.update({frontendContactItems : numberQuery})
         confirmedMessagesSent[frontendContactItems] = numberQuery
     user_email_from_database = CustomUser.objects.filter(id=frontendUserId).values_list('email', flat=False)
@@ -267,8 +290,9 @@ def send_category_text_image(frontendContactArrayType, frontendMessageTask, fron
             # creates a dictionary of strings for confirmation email that will be sent
             TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
             TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+            TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
             client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-            client.messages.create(body=frontendMessageTask, to=[eachNumber], from_="4704678410", media_url=[file])
+            client.messages.create(body=frontendMessageTask, to=[eachNumber], from_=TWILIO_ACCOUNT_PHONE, media_url=[file])
             confirmedMessagesSent[nameQuery] = eachNumber
             # creates a dictionary of strings for confirmation email that will be sent
     else:
@@ -286,8 +310,9 @@ def send_category_text_image(frontendContactArrayType, frontendMessageTask, fron
                 # creates a dictionary of strings for confirmation email that will be sent
                 TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
                 TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+                TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
                 client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-                client.messages.create(body=frontendMessageTask, to=[eachNumber], from_="4704678410", media_url=[upload_result['secure_url']])
+                client.messages.create(body=frontendMessageTask, to=[eachNumber], from_=TWILIO_ACCOUNT_PHONE, media_url=[upload_result['secure_url']])
                 confirmedMessagesSent[nameQuery] = eachNumber
                 # creates a dictionary of strings for confirmation email that will be sent
     user_email_from_database = CustomUser.objects.filter(id=frontendUserId).values_list('email', flat=False)
@@ -320,8 +345,9 @@ def send_outreach_text_image(frontendContactArrayType, frontendMessageTask, fron
         # stdout number for each name
         TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=frontEndOrg).org_sid
         TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=frontEndOrg).org_token
+        TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=frontEndOrg).org_phone
         client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-        client.messages.create(body=frontendMessageTask, to=[eachNumber], from_="4704678410", media_url=[file])
+        client.messages.create(body=frontendMessageTask, to=[eachNumber], from_=TWILIO_ACCOUNT_PHONE, media_url=[file])
         confirmedMessagesSent[nameQuery] = eachNumber
         # creates a dictionary of strings for confirmation email that will be sent
     user_email_from_database = CustomUser.objects.filter(id=frontendUserId).values_list('email', flat=False)
@@ -349,10 +375,6 @@ def send_outreach_first_follow_up_email():
     myCurrentdate = date.today()
     # prints 2022-08-24
     myCurrentDatetime = datetime(myCurrentdate.year, myCurrentdate.month, myCurrentdate.day)
-    # need this in order to convert time to datetime.datetime
-    # futureCheckDay = myCurrentDatetime + timedelta(days=3)
-    # futureCheckHour = myCurrentDatetime + timedelta(hours=24)
-    # futureCheckMinute = myCurrentDatetime + timedelta(minutes=60)
     # define time delta which will be substracted from the actual time !NOT BEING USED YET WILL BE USED IN FUTURE RELEASE FOR SPECIFIC TIME OF RELEASE!
     allDatabase = OutreachRegistrationForm.objects.values_list('id')
     for allDatabaseItemized in allDatabase:
@@ -397,8 +419,9 @@ Connect to our social media platforms. A lot of good content being pushed there.
             #assign self to the text_body variable.
             TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=orgNameString).org_sid
             TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=orgNameString).org_token
+            TWILIO_ACCOUNT_PHONE = OrganizationAccount.objects.get(org_name=orgName).org_phone
             client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
-            client.messages.create(body=send_text_data, to=databaseNumber, from_ = "4704678410")
+            client.messages.create(body=send_text_data, to=databaseNumber, from_ = TWILIO_ACCOUNT_PHONE)
             return ("text message successfully sent")
         if datetime_date >= previous_date_threshold >= previous_date_over_threshold and datetime_date <= myCurrentDatetime: 
             # future_date_measurements is today's date plus 3 days, including today. So if today is 8/24, this will be inclusive of 8/24-8/27
