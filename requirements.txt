@@ -3,7 +3,6 @@ aniso8601==7.0.0
 asgiref==3.5.2
 async-timeout==4.0.2
 attrs==22.1.0
-awsebcli==3.20.3
 bcrypt==4.0.1
 beautifulsoup4==4.11.2
 billiard==3.6.4.0
@@ -150,7 +149,6 @@ uritemplate==4.1.1
 urllib3==1.26.12
 vine==5.0.0
 virtualenv==20.16.3
-wcwidth==0.2.5
 websocket-client==0.59.0
 whitenoise==6.2.0
 wrapt==1.14.1
