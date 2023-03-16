@@ -3,7 +3,6 @@ aniso8601==7.0.0
 asgiref==3.5.2
 async-timeout==4.0.2
 attrs==22.1.0
-awsebcli==3.20.3
 bcrypt==4.0.1
 beautifulsoup4==4.11.2
 billiard==3.6.4.0
