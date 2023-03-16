@@ -14,7 +14,6 @@ REGEX_PHONE_NUMBER = RegexValidator(regex=r'^\d{10}$', message="PHONE MUST BE 10
         
 class CustomUser(AbstractUser):
     org = models.CharField(max_length=10, blank=True)
-    user_access = models.CharField(max_length=10, blank=True)
     
     def __str__(self):
         return self.username
