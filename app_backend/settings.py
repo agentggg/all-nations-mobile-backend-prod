@@ -27,7 +27,7 @@ SECRET_KEY = 'messageme33uqr880aqgqx1ql$e0hdoyy!vch1miwd9eztyfk5raw'
 
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['*']
 
 BASE_URL = "http://localhost:8000"
 
