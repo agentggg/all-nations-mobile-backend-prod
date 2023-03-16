@@ -72,7 +72,6 @@ Faker==15.3.4
 filelock==3.8.0
 flower==1.2.0
 future==0.16.0
-gevent==21.12.0
 graphene==2.1.9
 graphene-django==2.15.0
 graphql-core==2.3.2
