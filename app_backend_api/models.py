@@ -29,7 +29,7 @@ class OrganizationAccount(models.Model):
     org_instagram_link = models.URLField(max_length=300, blank=True, null = True)  
     org_tiktk_link = models.URLField(max_length=300, blank=True, null = True)  
     org_website_link = models.URLField(max_length=300, blank=True, null = True)  
-
+    org_phone = models.CharField(max_length=14, blank=True)
     
     def __str__(self):
         return self.org_name
