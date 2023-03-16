@@ -14,22 +14,56 @@ testing
 import os
 import environ
 from pathlib import Path
+import django_heroku
+import sentry_sdk
+# Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
 from django.db.backends.mysql.base import DatabaseWrapper
-DatabaseWrapper.data_types['DateTimeField'] = 'datetime' # fix for MySQL 5.5
+DatabaseWrapper.data_types['DateTimeField']='datetime'
 env = environ.Env()
 # reading .env file
 environ.Env.read_env()
-BASE_DIR = Path(__file__).resolve().parent.parent
 
+sentry_sdk.init(
+    dsn="https://5ea09012624c444f89fc7f25f91ab844@o1420743.ingest.sentry.io/6765891",
+    integrations=[   
+    ],
 
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+
+    # If you wish to associate users to errors (assuming you are using
+    # django.contrib.auth) you may enable sending PII data.
+    send_default_pii=True
+)
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'messageme33uqr880aqgqx1ql$e0hdoyy!vch1miwd9eztyfk5raw'
+SECRET_KEY = env("SECRET_KEY")
+DJANGO_GUID = {
+    'GUID_HEADER_NAME': 'Correlation-ID',
+    'VALIDATE_GUID': True,
+    'RETURN_HEADER': True,
+    'EXPOSE_HEADER': True,
+    'INTEGRATIONS': [],
+    'IGNORE_URLS': [],
+    'UUID_LENGTH': 32,
+}
+# for django guid for debug id tracker
 
+CLOUDINARY_URL={
+    'CLOUD_NAME':env('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY':env('CLOUDINARY_API_KEY'),
+    'API_SECRET':env('CLOUDINARY_API_SECRET')
+}
+# Quick-start development settings - unsuitable for production
+# See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
 DEBUG = True
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [
+    'nations4christ.net',
+]
 
-BASE_URL = "http://localhost:8000"
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
@@ -55,47 +89,53 @@ INSTALLED_APPS = [
     # 'debug_toolbar',
     # ONLY FOR TESTING
     'imagekit',
+
 ]
 
+
 CORS_ALLOWED_ORIGINS = [
-    'http://localhost:3000',
+    'https://www.nations4christ.net',
 ]
+#$ celery -A app_backend beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
 
 #https://www.stackhawk.com/blog/django-cors-guide/
 MIDDLEWARE = [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+    # ONLY FOR TESTING
     'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
+    'django_guid.middleware.guid_middleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+
 ]
-MEDIA_URL = '/media/'  # or any prefix you choose
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media/')  
 
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = env('EMAIL_HOST')
-EMAIL_PORT = env('EMAIL_PORT')
-EMAIL_HOST_USER = env('EMAIL_HOST_USER')
-SERVER_EMAIL = env('EMAIL_HOST')
-EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_HOST_USER = env("email")
+SERVER_EMAIL = env("EMAIL_HOST")
+EMAIL_HOST_PASSWORD = env("pas")
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
 ADMINS = [
-    ("Stevenson Gerard Eustache", "tech.and.faith.contact@gmail.com")
+    ("Stevenson Gerard Eustache", "evolvingtechnologies1@outlook.com")
 ]
 # send emails and debug error to admins
+
 ROOT_URLCONF = 'app_backend.urls'
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'app_backend/templates')],
+        'DIRS': [os.path.join(BASE_DIR, '../frontend', 'src')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -108,9 +148,20 @@ TEMPLATES = [
     },
 ]
 
+REDIS_HOST = env('REDIS_HOST')
+REDIS_PORT = env('REDIS_PORT')
+REDIS_PASSWORD = env('REDIS_PASSWORD')
+REDIS_URL = f'redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}'
+
 WSGI_APPLICATION = 'app_backend.wsgi.application'
+# Database
+# https://docs.djangoproject.com/en/3.2/ref/settings/#databases
+
+SPATIALITE_LIBRARY_PATH = 'mod_spatialite.so'
 
 DATABASES = {
+#https://stackoverflow.com/questions/43612243/install-mysqlclient-for-django-python-on-mac-os-x-sierra/54521244
+#https://python.plainenglish.io/connect-django-with-database-43f1965565e0
     'default': {
         'ENGINE': env("ENGINE_NAME"),
         'NAME': env("DATABASE_NAME"), #Database Name
@@ -123,10 +174,6 @@ DATABASES = {
         'init_command': "SET sql_mode='STRICT_TRANS_TABLES'"
         }    
     }
-
-#https://stackoverflow.com/questions/43612243/install-mysqlclient-for-django-python-on-mac-os-x-sierra/54521244
-
-
 
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -145,13 +192,11 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/3.2/topics/i18n/
-
 LANGUAGE_CODE = 'en-us'
 TIME_ZONE='UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
-
 
 
 # Static files (CSS, JavaScript, Images)
@@ -160,11 +205,22 @@ USE_TZ = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
-# STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = 'app_backend_api/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+
+# Extra places for collectstatic to find static files.
+STATIC_URL = '/static/'
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field
+
+DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, '../frontend', 'build', 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -178,26 +234,29 @@ CACHES = {
         }
     }
 }
-# #BATTOON CUSTOMER DJANGO.
+CORS_REPLACE_HTTPS_REFERER      = True
+HOST_SCHEME                     = "https://"
+SECURE_PROXY_SSL_HEADER         = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT             = True
+# force https
+SESSION_COOKIE_SECURE           = True
+# CSRF protection prevents you from accidentally sending your session and your CSRF cookie over HTTP by accident.
+CSRF_COOKIE_SECURE              = True
+# CSRF protection prevents you from accidentally sending your session and your CSRF cookie over HTTP by accident.
+SECURE_FRAME_DENY               = True
+SECURE_BROWSER_XSS_FILTER       = True 
+# Cross-site Scripting protection
+SECURE_CONTENT_TYPE_NOSNIFF     = True
+# Cross-site Scripting protection
+SECURE_HSTS_SECONDS             = 86400 
+# The above line will protect your web application from man-in-the-middle attacks and will force a connection over HTTPS.
+SECURE_HSTS_PRELOAD             = True 
+# The above line will protect your web application from man-in-the-middle attacks and will force a connection over HTTPS.
+SECURE_HSTS_INCLUDE_SUBDOMAINS  = True
+# The above line will protect your web application from man-in-the-middle attacks and will force a connection over HTTPS.
+django_heroku.settings(locals())
+# django_heroku.settings(locals())
 
 AUTH_USER_MODEL = "app_backend_api.CustomUser"  # new
 # # custom user model database for login
-
-import os
-import redis
-
-REDIS_HOST = env('REDIS_HOST')
-REDIS_PORT = env('REDIS_PORT')
-REDIS_PASSWORD = env('REDIS_PASSWORD')
-REDIS_URL = f'redis://{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}'
-
-
-INTERNAL_IPS = [
-    "127.0.0.1",
-]
-
-CLOUDINARY_URL={
-    'CLOUD_NAME':env('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY':env('CLOUDINARY_API_KEY'),
-    'API_SECRET':env('CLOUDINARY_API_SECRET')
-}
+# Application definition
