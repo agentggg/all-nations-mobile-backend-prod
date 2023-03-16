@@ -35,18 +35,25 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'django.contrib.admin',
     'django.contrib.staticfiles',
+    'graphene_django',
     'app_backend_api',
     'django.contrib.auth',
     'django_extensions',
     'django_twilio',
     'corsheaders',
     'rest_framework',
-    'django_custom_user_migration',
+    # 'django_custom_user_migration',
     'rest_framework.authtoken',
+    # instructions says to disable that, but that is the table. so with this 
+    # disabled, i don't know where token is suppose to go?
+    # yea one sec 
     'django_celery_beat',
-    'django.contrib.admin',
-    'baton.autodiscover',
+    # 'django.contrib.gis',
+    'django_guid',
+    # 'debug_toolbar',
+    # ONLY FOR TESTING
     'imagekit',
 ]
 
