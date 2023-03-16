@@ -154,7 +154,7 @@ def contact_email_api_data(request):
         elif request.method == "GET":
             return Response("Please screenshot and contact your system admin if you are seeing this page 'GET-email-api'")
     except Exception as e:
-        return(e)
+        return Response(e)
     return Response("Please screenshot and contact your system admin if you are seeing this page con email-api")
 
 @api_view(['GET', 'POST'])
