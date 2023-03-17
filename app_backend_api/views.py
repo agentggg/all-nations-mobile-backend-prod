@@ -699,9 +699,40 @@ class CustomAuthToken(ObtainAuthToken):
                 'username':user.username,
                 'email':user.email,
                 'org':user.org,
-                'status':True
+                'active':user.is_active
             })
         # sent to the frontend
+
+@api_view(['POST'])
+def save_push_token(request): 
+    username = request.data.get('username', False)
+    pushToken = request.data.get('token', False)
+    queryUsernameId = CustomUser.objects.values_list('id', flat=True).get(username=username)
+    customUserInstance = CustomUser.objects.get(id=queryUsernameId)
+    deviceMake = request.data.get('deviceMake', False)
+    deviceModel = request.data.get('deviceModel', False)
+    confirmPushToken = PushToken.objects.filter(username=queryUsernameId).exists()
+    if confirmPushToken == False:
+        try:
+            PushToken.objects.create(
+                username=customUserInstance,
+                device_make=deviceMake,
+                device_model=deviceModel,
+                push_token=pushToken
+                )
+            return Response('successful')
+        except Exception as e:
+            print(e)
+    elif confirmPushToken == True:
+        try:
+            PushToken.objects.filter(username=customUserInstance).update(push_token=pushToken)
+            return Response('successful')
+        except Exception as err:
+            print(err)
+            return Response('unsuccessful')
+    return Response('unsuccessful')
+
+
 
 @api_view(['GET', 'POST'])
 def image_kit_api(request):

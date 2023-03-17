@@ -152,8 +152,6 @@ CELERY_BROKER_URL = env("REDIS_HOST")
 CELERY_RESULT_BACKEND = env("REDIS_HOST")
 BROKER_URL = env("REDIS_HOST")
 
-
-
 WSGI_APPLICATION = 'app_backend.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases

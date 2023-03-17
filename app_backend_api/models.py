@@ -18,6 +18,16 @@ class CustomUser(AbstractUser):
     def __str__(self):
         return self.username
 
+class PushToken(models.Model):
+    username = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
+    push_token = models.TextField(null=False, blank=False)
+    device_make = models.TextField(null=False, blank=False)
+    device_model = models.TextField(null=False, blank=False)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):  
+        return self.username
+
 class OrganizationAccount(models.Model):
     org_name = models.TextField(max_length=10, blank=True)
     org_token = models.TextField(max_length=300, blank=True)

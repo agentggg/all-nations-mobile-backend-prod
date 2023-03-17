@@ -55,6 +55,7 @@ urlpatterns = [
     path('all_outreach', all_outreach, name='all_outreach'),
     path('view_recipient', view_recipient, name='view_recipient'),
     path('image_kit_api', image_kit_api, name='image_kit_api'),
+    path('save_push_token', save_push_token, name='save_push_token'),
     path('outreach_contact_email_api_data', outreach_contact_email_api_data, name='outreach_contact_email_api_data'),
     path('login_verification', CustomAuthToken.as_view(), name='login_verification'),  # <-- And here
     # change to your custom view
