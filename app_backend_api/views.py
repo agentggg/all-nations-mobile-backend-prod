@@ -22,6 +22,7 @@ from django.db.models import F
 from imagekitio import ImageKit
 import cloudinary
 import cloudinary.uploader
+import dropbox
 env = environ.Env()
 environ.Env.read_env()
 
@@ -747,14 +748,19 @@ def image_kit_api(request):
 
 @api_view(['GET', 'POST'])
 def testing_testing(request):
-    old_stdout = sys.stdout
-    result = StringIO()
-    sys.stdout = result
-    call_command('dumpdata')
-    sys.stdout = old_stdout
-    result_string = result.getvalue()
-    now = datetime.now()
-    fullDate = now.strftime("%m/%d/%Y")
-    emailSubject = f"""All Nations Backup for {fullDate}"""
-    send_mail(emailSubject, result_string, EMAIL_HOST_USER, ['gersard@yahoo.com'])
-    return Response('backup process completed')
+    try:
+        access_token = ("access_token")
+        client = dropbox.Dropbox(access_token)
+        dropbox_folder = '/all-nations'
+        current_date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        file_name = f"data-{current_date_time}.json"
+        file_path = f"{dropbox_folder}/{file_name}"
+        json_data = {'key':'number'}
+        with open(file_name, "w") as f:
+            json.dump(json_data, f)
+        with open(file_name, 'rb') as f:
+            client.files_upload(f.read(), file_path, mode=dropbox.files.WriteMode.overwrite)
+    except Exception as e:
+        print(f"An error occurred: {e}.")
+        return Response ('error uploading to backup server')
+    return Response ('Successful')
