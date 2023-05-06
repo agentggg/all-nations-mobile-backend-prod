@@ -1,4 +1,5 @@
 
+import contextlib
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework.authtoken.views import ObtainAuthToken
@@ -15,20 +16,20 @@ import json
 # used to parse the JSON data from the register form
 #https://stackoverflow.com/questions/62068698/credentials-are-required-to-create-a-twilioclient
 from .tasks import *
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from django.http import Http404
 from jotform import *
 from django.db.models import F
-from imagekitio import ImageKit
-import cloudinary
-import cloudinary.uploader
-import dropbox
-env = environ.Env()
-environ.Env.read_env()
+from twilio.rest import Client
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+import stripe
+
+ADMIN_CONTACT = 'raw2535@gmail.com'
+email = 'raw2535@gmail.com'
 
 
-ADMIN_CONTACT = env("EMAIL_HOST_USER")
-email = env("EMAIL_HOST_USER")
 
 @api_view(['GET', 'POST'])
 def jot_form_api_call(request):
@@ -39,10 +40,17 @@ def jot_form_api_call(request):
     submissions = jotformAPIClient.get_form_submissions(latestFormID)
     return Response(submissions)
 
+@csrf_exempt
+@api_view(['GET', 'POST'])
+def jot_form_api_inbound(request):
+    if request.method == 'POST':
+        print(request.POST)
+    return JsonResponse({'status': 'error'}, status=400)
 
 @api_view(['GET', 'POST'])
 def contact_api_data(request):
     username = request.data.get('username', False)
+    print("==>> username: ", username)
     userPermission = CustomUser.objects.filter(username=username, groups__name='SendMessage').exists()
     userPermissionAdmin = CustomUser.objects.filter(username=username, groups__name='SendMessage').exists()
 
@@ -130,6 +138,8 @@ def outreach_api_data(request):
     return Response("Please screenshot and contact your system admin if you are seeing this page out-api")
 
 
+
+
 @api_view(['GET', 'POST'])
 def contact_email_api_data(request):
     try:
@@ -155,8 +165,7 @@ def contact_email_api_data(request):
         elif request.method == "GET":
             return Response("Please screenshot and contact your system admin if you are seeing this page 'GET-email-api'")
     except Exception as e:
-        print(e)
-        return Response('error')
+        return(e)
     return Response("Please screenshot and contact your system admin if you are seeing this page con email-api")
 
 @api_view(['GET', 'POST'])
@@ -295,13 +304,19 @@ def admin_delete_user(request):
     try:
         if request.method == 'POST':
             user = request.data.get('user', False)
-            # retrieve data from frontend
-            Contact.objects.filter(id=user).delete()
+            setView = request.data.get('setView', False)
+            if setView == 'outreach':
+                 OutreachRegistrationForm.objects.filter(id=user).delete()
+                 return Response("Contact deleted")
+            else:
+                Contact.objects.filter(id=user).delete()
+                return Response("Contact deleted")
             # this query is used to retrieve only category values pertainent to that username
-            return Response("Contact deleted")
     except Exception as e:
         print(e)
     return Response("Please screenshot and contact your system admin if you are seeing this page. cat-api")
+
+
 
 
 @api_view(['GET', 'POST'])
@@ -392,7 +407,6 @@ def outreach_registration_api_data(request):
             outreach_phone_number = phoneNumber,
             outreach_category = category,
             minister_category = username,
-            # who ministered to them
             contact_notes = notes,
             outreach_date = TODAY.strftime("%m/%d/%Y"),
             outreach_time = interactionTime,
@@ -403,8 +417,7 @@ def outreach_registration_api_data(request):
             user_email = email,
             org_name = org
             )
-            # the create method also includes a .save method at the end.
-        return Response("user profile created")
+        return Response("successful")
     elif request.method == "GET":
         return Response("This is a GET and not a POST. Please contact admin")
     else:
@@ -434,6 +447,7 @@ def view_recipient(request):
                 category_value = CategoryGroup.objects.values_list('id', flat=True).get(org=org, name_info=frontendCategory)
                 # this will convert the category name into category id number to be able to build the relational table
                 categroyQuery = Contact.objects.filter(contact_category_id=category_value).values_list('first_name_info', flat=True)
+                print("==>> categroyQuery: ", categroyQuery)
             return Response(categroyQuery)
         elif groupType == "outreach_api":
             contactType = request.data.get('contactType', False)
@@ -447,6 +461,7 @@ def view_recipient(request):
                 frontendCategory = ' '.join(contactType)
                 # converts the minister into a string to be accessible in the code as a string
                 ambassadorContact = OutreachRegistrationForm.objects.filter(minister_category=frontendCategory).values_list('outreach_first_name', flat=True)
+                print("==>> ambassadorContact: ", ambassadorContact)
                 # this will convert the category name into category id number to be able to build the relational table
             return Response(ambassadorContact)
     except Exception as e:
@@ -454,45 +469,78 @@ def view_recipient(request):
         return Response(e)
     raise Http404
 
-
 @api_view(['POST'])
 def create_account(request):
     try:
         if request.method == "POST":
-            name = request.data.get("username", False)
-            pword = request.data.get("password", False)
-            fname = request.data.get("firstName", False)
-            lname = request.data.get("lastName", False)
+            username = request.data.get("username", False)
+            password = request.data.get("password", False)
+            firstName = request.data.get("firstName", False)
+            lastName = request.data.get("lastName", False)
             email = request.data.get("email", False)
-            org = request.data.get("organization", False)
-            user = CustomUser.objects.create_user(
-                username = name, 
-                password = pword, 
-                first_name = fname, 
-                last_name = lname,
-                email = email,
-                org = org
-                ) 
-            user.is_active = False
-            user.save()
+            orgName = request.data.get("orgName", False)
+            orgAddress = request.data.get("orgAddress", False)
+            orgRedirect = request.data.get("orgRedirect", False)
+            instagram = request.data.get("instagram", False)
+            facebook = request.data.get("facebook", False)
+            tikTok = request.data.get("tikTok", False)
+            youTube = request.data.get("youTube", False)
+            inputs = request.data.get("inputs", False)
+            user_id = CustomUser.objects.filter(username='cisco').values_list('id', flat=True)[0]
+            userInstance = CustomUser.objects.get(id=user_id)
+            try:
+                with transaction.atomic():
+                    user = CustomUser.objects.create_user(
+                        username = username, 
+                        password = password, 
+                        first_name = firstName, 
+                        last_name = lastName,
+                        email = email,
+                        org = orgName
+                    )
+                    user.is_active = False
+                    user.save()
+
+                    OrganizationAccount.objects.create(
+                        org_name = orgName,
+                        org_gui_name = orgName,
+                        org_address = orgAddress,
+                        org_website_link = orgRedirect,
+                        org_instagram_link = instagram,
+                        org_facebook_link = facebook,
+                        org_tiktk_link = tikTok,
+                        org_youtube_link = youTube,
+                    )
+            except Exception as e:
+                print(e)
+                return Response("Accont not created")
+            for eachCategory in inputs:
+                    try:
+                        CategoryGroup.objects.create(
+                            name_info = eachCategory,
+                            org = orgName,
+                            user = userInstance
+                        )
+                    except Exception as e:
+                        print(e)
             # this creates the user and the next one does the token portion using Django built in
             user_profile_email = (f"""            
 The following account requires approval. Please visit admin site to approve:
 
-Username: {name}
-First name: {fname}
-Last name: {lname}
+Username: {username}
+First name: {firstName}
+Last name: {lastName}
 email: {email}
-organiztation: {org}
+organiztation: {orgName}
             """)
             user_account_creator_email = (f"""            
 The following account has been sent to the All Nations team for approval. 
 
 Please contact your organization admin if your account has not been activated after 72 hours:
 
-Username: {name}
-First name: {fname}
-Last name: {lname}
+Username: {username}
+First name: {firstName}
+Last name: {lastName}
 email: {email}
             """)
             createNewAccount.delay("Thank you for signing up!", user_account_creator_email, ADMIN_CONTACT, [email])
@@ -548,6 +596,15 @@ def analytic_report(request):
             # info of the user being sent
             complete_coordinates.append(pair)
         return Response(complete_coordinates)
+
+@api_view(['GET', 'POST'])
+def subscribe(request):
+    if request.method != "POST":
+        return Response("This is a POST and not a GET. Please contact admin")
+    print(request.data)
+    username = request.data.get("username", False)
+    amount = request.data.get("amount", False)
+    return Response('token_value')
 
 
 @api_view(['GET', 'POST'])
@@ -680,13 +737,43 @@ def all_outreach(request):
             if userView == 'outreachContacts':
                 user_profile = OutreachRegistrationForm.objects.filter(org_name=org).values_list('outreach_first_name', flat=True).order_by("outreach_date")
             else:
-                user_profile = OutreachRegistrationForm.objects.filter(org_name=org).values('outreach_first_name', 'outreach_last_name', 'outreach_phone_number', 'outreach_spot','outreach_category', 'outreach_date', 'contact_notes', 'user_id', 'org_name', 'minister_category', 'id').order_by("outreach_date")
+                user_profile = OutreachRegistrationForm.objects.filter(org_name=org).values('outreach_first_name', 'outreach_last_name', 'outreach_phone_number', 'outreach_spot','outreach_category', 'outreach_date', 'contact_notes', 'user_id', 'org_name', 'minister_category', 'id', 'outreach_time').order_by("outreach_date")
             return Response(user_profile)
     except Exception as e:
         print(e)
     return Response("Please screenshot and contact your system admin if you are seeing this page con-api.")
 
 
+def create_payment_method(request):
+    # Get the card token from the request
+    print(request.POST)
+    card_token = request.POST.get('card_token')
+    # Get the billing details from the request
+    billing_details = {
+        'name': request.POST.get('name'),
+        'email': request.POST.get('email'),
+        'phone': request.POST.get('phone'),
+        'address': {
+            'line1': request.POST.get('address_line1'),
+            'line2': request.POST.get('address_line2'),
+            'city': request.POST.get('city'),
+            'state': request.POST.get('state'),
+            'postal_code': request.POST.get('postal_code'),
+            'country': request.POST.get('country')
+        }
+    }
+
+    # Create the payment method with the card token and billing details
+    payment_method = stripe.PaymentMethod.create(
+        type='card',
+        card={
+            'token': card_token
+        },
+        billing_details=billing_details
+    )
+
+    # Return the payment method details
+    return JsonResponse({'payment_method': payment_method})
 
 class CustomAuthToken(ObtainAuthToken):
     def post(self, request, *args, **kwargs):
@@ -702,7 +789,6 @@ class CustomAuthToken(ObtainAuthToken):
                 'org':user.org,
                 'active':user.is_active
             })
-        # sent to the frontend
 
 @api_view(['POST'])
 def save_push_token(request): 
@@ -734,33 +820,77 @@ def save_push_token(request):
     return Response('unsuccessful')
 
 
+@api_view(['POST'])
+def twilio_text_info(request):
+    user_org = request.data.get('user_org', False)
+    TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=user_org).org_sid
+    TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=user_org).org_token
+    client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
+
+    # Get the current date and subtract 7 days to get the date 7 days ago
+    today = datetime.now(timezone.utc)
+    days_ago = today - timedelta(days=3)
+
+    # Get all messages sent from your Twilio account
+    messages = client.messages.list()
+    message_list = []
+    for message in messages:
+        date_sent = message.date_sent.astimezone(timezone.utc)
+        
+        # Only include messages that were sent within the last 7 days
+        if date_sent >= days_ago:
+            message_dict = {
+                'sid': message.sid,
+                'from': message.from_,
+                'to': message.to,
+                'body': message.body,
+                'date_sent': str(date_sent),
+                'status': message.status
+            }
+            message_list.append(message_dict)
+
+    # Sort the list of messages by date_sent
+    sorted_messages = sorted(message_list, key=lambda k: k['date_sent'], reverse=True)
+
+    # Convert the sorted list of messages to a JSON string
+    json_messages = json.dumps(sorted_messages)
+
+    # Return the JSON response
+    return JsonResponse(json.loads(json_messages), safe=False)
+
+@api_view(['POST'])
+def get_account_balance(request):
+    user_org = request.data.get('user_org', False)
+    TWILIO_ACCOUNT_SID = OrganizationAccount.objects.get(org_name=user_org).org_sid
+    TWILIO_ACCOUNT_TOKEN = OrganizationAccount.objects.get(org_name=user_org).org_token
+    client = Client(TWILIO_ACCOUNT_SID, TWILIO_ACCOUNT_TOKEN)
+
+    # Get the account balance
+    balance = client.balance.fetch().balance
+
+    # Round the balance to two decimal places
+    rounded_balance = round(float(balance), 2)
+
+    # Create a dictionary with the rounded balance
+    response_data = {'balance': str(rounded_balance)}
+
+    # Convert the dictionary to a JSON string
+    json_data = json.dumps(response_data)
+
+    # Return the JSON response
+    return JsonResponse(json.loads(json_data), safe=False)
+
 
 @api_view(['GET', 'POST'])
 def image_kit_api(request):
-    imagekit = ImageKit(
-        public_key='public_aDahP208/A6D0rqkxn5opFd4m6o=',
-        private_key='private_Wdi3LTfI9KmRws+U/NZDkQxSdTE=',
-        url_endpoint = 'localhost'
-    )
-    auth_params = imagekit.get_authentication_parameters()
-    return Response(auth_params)
-
+    # imagekit = ImageKit(
+    #     public_key='public_aDahP208/A6D0rqkxn5opFd4m6o=',
+    #     private_key='private_Wdi3LTfI9KmRws+U/NZDkQxSdTE=',
+    #     url_endpoint = 'localhost'
+    # )
+    # auth_params = imagekit.get_authentication_parameters()
+    return Response("auth_params")
 
 @api_view(['GET', 'POST'])
 def testing_testing(request):
-    try:
-        access_token = ("access_token")
-        client = dropbox.Dropbox(access_token)
-        dropbox_folder = '/all-nations'
-        current_date_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        file_name = f"data-{current_date_time}.json"
-        file_path = f"{dropbox_folder}/{file_name}"
-        json_data = {'key':'number'}
-        with open(file_name, "w") as f:
-            json.dump(json_data, f)
-        with open(file_name, 'rb') as f:
-            client.files_upload(f.read(), file_path, mode=dropbox.files.WriteMode.overwrite)
-    except Exception as e:
-        print(f"An error occurred: {e}.")
-        return Response ('error uploading to backup server')
     return Response ('Successful')

@@ -54,8 +54,13 @@ urlpatterns = [
     path('text_confirmation', text_confirmation, name='text_confirmation'),
     path('all_outreach', all_outreach, name='all_outreach'),
     path('view_recipient', view_recipient, name='view_recipient'),
-    path('image_kit_api', image_kit_api, name='image_kit_api'),
     path('save_push_token', save_push_token, name='save_push_token'),
+    path('subscribe', subscribe, name='subscribe'),
+    path('twilio_text_info', twilio_text_info, name='twilio_text_info'),
+    path('get_account_balance', get_account_balance, name='get_account_balance'),
+    # path('jot_form_api_inbound', jot_form_api_inbound, name='jot_form_api_inbound'),
+    path('jot_form_api_inbound', jot_form_api_inbound, name='jot_form_api_inbound'),
+    path('image_kit_api', image_kit_api, name='image_kit_api'),
     path('outreach_contact_email_api_data', outreach_contact_email_api_data, name='outreach_contact_email_api_data'),
     path('login_verification', CustomAuthToken.as_view(), name='login_verification'),  # <-- And here
     # change to your custom view
@@ -67,7 +72,5 @@ urlpatterns = [
     # ONLY FOR TESTING.
     path("graphql", csrf_exempt(GraphQLView.as_view(graphiql=True, schema=schema))),
     # graphing
-    path("docs/", schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
-
-
+    path("docs/", schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc')
 ]
