@@ -46,6 +46,7 @@ urlpatterns = [
     path('minister_email_api', minister_email_api_data, name='minister_email_api'),
     path('register_api', register_api_data, name='register_api'),
     path('outreach_registration_api', outreach_registration_api, name='outreach_registration_api'),
+    path('outreach_contact_email_api', outreach_contact_email_api, name='outreach_contact_email_api'),
     path('create_account', create_account, name='create_account'),
     path('analyticals', analytic_report, name='analytics'),
     path('token_validation', token_validation, name='token_validation'),
@@ -61,7 +62,7 @@ urlpatterns = [
     # path('jot_form_api_inbound', jot_form_api_inbound, name='jot_form_api_inbound'),
     path('jot_form_api_inbound', jot_form_api_inbound, name='jot_form_api_inbound'),
     path('image_kit_api', image_kit_api, name='image_kit_api'),
-    path('outreach_contact_email_api_data', outreach_contact_email_api_data, name='outreach_contact_email_api_data'),
+    path('contact_email_api_data', contact_email_api_data, name='contact_email_api_data'),
     path('login_verification', CustomAuthToken.as_view(), name='login_verification'),  # <-- And here
     # change to your custom view
     path('accounts/', include('django.contrib.auth.urls')),
