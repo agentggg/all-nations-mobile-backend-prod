@@ -85,9 +85,6 @@ INSTALLED_APPS = [
     # yea one sec 
     'django_celery_beat',
     # 'django.contrib.gis',
-    'django_guid',
-    # 'debug_toolbar',
-    # ONLY FOR TESTING
     'imagekit',
 
 ]
@@ -100,8 +97,6 @@ CORS_ALLOWED_ORIGINS = [
 
 #https://www.stackhawk.com/blog/django-cors-guide/
 MIDDLEWARE = [
-    "debug_toolbar.middleware.DebugToolbarMiddleware",
-    # ONLY FOR TESTING
     'django.middleware.security.SecurityMiddleware',
     # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
