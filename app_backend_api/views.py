@@ -232,6 +232,7 @@ def outreach_contact_email_api_data(request):
     try:
         if request.method == "POST":
             username = request.data.get('username', False)
+            print(username)
             message = request.data.get('message', False)
             contactSelection = request.data.get('contactSelection', False)
             org = request.data.get('org', False)
