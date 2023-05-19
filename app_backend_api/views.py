@@ -793,8 +793,10 @@ class CustomAuthToken(ObtainAuthToken):
 
 @api_view(['POST'])
 def save_push_token(request): 
-    username = request.data.get('username', False)
     pushToken = request.data.get('token', False)
+    if pushToken == False:
+        return('successful')
+    username = request.data.get('username', False)
     queryUsernameId = CustomUser.objects.values_list('id', flat=True).get(username=username)
     customUserInstance = CustomUser.objects.get(id=queryUsernameId)
     deviceMake = request.data.get('deviceMake', False)
