@@ -375,7 +375,6 @@ def register_api_data(request):
 @api_view(['GET', 'POST'])
 def outreach_registration_api(request):   
     username = request.data.get('username', False)
-    print(username)
     #gathers the profile first name info to save in the DB
     interactionTime = request.data.get('time', False)
     # retrieves time from frontend, time in user local timezone
@@ -793,10 +792,8 @@ class CustomAuthToken(ObtainAuthToken):
 
 @api_view(['POST'])
 def save_push_token(request): 
-    pushToken = request.data.get('token', False)
-    if pushToken == False:
-        return('successful')
     username = request.data.get('username', False)
+    pushToken = request.data.get('token', False)
     queryUsernameId = CustomUser.objects.values_list('id', flat=True).get(username=username)
     customUserInstance = CustomUser.objects.get(id=queryUsernameId)
     deviceMake = request.data.get('deviceMake', False)
