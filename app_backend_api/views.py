@@ -375,6 +375,7 @@ def register_api_data(request):
 @api_view(['GET', 'POST'])
 def outreach_registration_api_text(request):   
     username = request.data.get('username', False)
+    print(f"==>> username: {username}")
     #gathers the profile first name info to save in the DB
     interactionTime = request.data.get('time', False)
     # retrieves time from frontend, time in user local timezone
