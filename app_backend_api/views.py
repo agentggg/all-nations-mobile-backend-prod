@@ -226,12 +226,17 @@ def minister_email_api_data(request):
         print(e)
     return Response("Please screenshot and contact your system admin if you are seeing this page con email-api")
 
+
+
+
+
 @api_view(['GET', 'POST'])
-def outreach_contact_email_api_data(request):
+def outreach_contact_email_api(request):
     # will send messages to the individual contacts
     try:
         if request.method == "POST":
             username = request.data.get('username', False)
+            print(f"==>> username: {username}")
             message = request.data.get('message', False)
             contactSelection = request.data.get('contactSelection', False)
             org = request.data.get('org', False)
@@ -251,6 +256,59 @@ def outreach_contact_email_api_data(request):
     except Exception as e:
         print(e)
     return Response("Please screenshot and contact your system admin if you are seeing this page con email-api")
+
+@api_view(['GET', 'POST'])
+def outreach_registration_api_data(request):   
+    username = request.data.get('username', False)
+    #gathers the profile first name info to save in the DB
+    interactionTime = request.data.get('time', False)
+    # retrieves time from frontend, time in user local timezone
+    userPermission = CustomUser.objects.filter(username=username, groups__name='OutreachOnly').exists()
+    if userPermission == False:
+        raise Http404
+    # outreach page. Creates database entry and then signals for automated text message
+    if request.method == "POST":
+        email = request.data.get('email', False)
+        # retrieve data from frontend
+        username_id_database_request = CustomUser.objects.filter(username=username).values_list('id', flat=True)
+        # retrieving the username info from frontend and accessing the id number value so we can leverage it in the following SQL request
+        username_database_request_integer_format = json.dumps(list(username_id_database_request)[0]).replace('"','')
+        # converting the username_id_database_request from <QuerySet [1]> to just the number 1
+        TODAY = date.today()
+        now = datetime.now()
+        firstName = request.data.get("firstName", False)
+        lastName = request.data.get("lastName", False)
+        phoneNumber = request.data.get("phoneNumber", False)
+        notes = request.data.get("notes", False)
+        category = request.data.get("category", False)
+        outreachSpotEntry = request.data.get("location", False)
+        latitude = request.data.get("latitude", False)
+        userLongitude = request.data.get("longitude", False)
+        org = request.data.get("org", False) 
+        saveOption = request.data.get("saveOption", False)
+        OutreachRegistrationForm.objects.create(
+            outreach_first_name = firstName, 
+            outreach_last_name = lastName,
+            outreach_phone_number = phoneNumber,
+            outreach_category = category,
+            minister_category = username,
+            contact_notes = notes,
+            outreach_date = TODAY.strftime("%m/%d/%Y"),
+            outreach_time = interactionTime,
+            outreach_spot = outreachSpotEntry,
+            outreach_latitude = latitude,
+            outreach_longitude = userLongitude,
+            user_id = username_database_request_integer_format,
+            user_email = email,
+            org_name = org
+            )
+        return Response("successful")
+    elif request.method == "GET":
+        return Response("This is a GET and not a POST. Please contact admin")
+    else:
+        return Response("Please screenshot and contact your system admin if you are seeing this page")
+
+
 
 
 
@@ -372,57 +430,6 @@ def register_api_data(request):
         print(e) 
     return Response("Please screenshot and contact your system admin if you are seeing this page reg-api")
 
-@api_view(['GET', 'POST'])
-def outreach_registration_api(request):   
-    username = request.data.get('username', False)
-    print(username)
-    #gathers the profile first name info to save in the DB
-    interactionTime = request.data.get('time', False)
-    # retrieves time from frontend, time in user local timezone
-    userPermission = CustomUser.objects.filter(username=username, groups__name='OutreachOnly').exists()
-    if userPermission == False:
-        raise Http404
-    # outreach page. Creates database entry and then signals for automated text message
-    if request.method == "POST":
-        email = request.data.get('email', False)
-        # retrieve data from frontend
-        username_id_database_request = CustomUser.objects.filter(username=username).values_list('id', flat=True)
-        # retrieving the username info from frontend and accessing the id number value so we can leverage it in the following SQL request
-        username_database_request_integer_format = json.dumps(list(username_id_database_request)[0]).replace('"','')
-        # converting the username_id_database_request from <QuerySet [1]> to just the number 1
-        TODAY = date.today()
-        now = datetime.now()
-        firstName = request.data.get("firstName", False)
-        lastName = request.data.get("lastName", False)
-        phoneNumber = request.data.get("phoneNumber", False)
-        notes = request.data.get("notes", False)
-        category = request.data.get("category", False)
-        outreachSpotEntry = request.data.get("location", False)
-        latitude = request.data.get("latitude", False)
-        userLongitude = request.data.get("longitude", False)
-        org = request.data.get("org", False) 
-        saveOption = request.data.get("saveOption", False)
-        OutreachRegistrationForm.objects.create(
-            outreach_first_name = firstName, 
-            outreach_last_name = lastName,
-            outreach_phone_number = phoneNumber,
-            outreach_category = category,
-            minister_category = username,
-            contact_notes = notes,
-            outreach_date = TODAY.strftime("%m/%d/%Y"),
-            outreach_time = interactionTime,
-            outreach_spot = outreachSpotEntry,
-            outreach_latitude = latitude,
-            outreach_longitude = userLongitude,
-            user_id = username_database_request_integer_format,
-            user_email = email,
-            org_name = org
-            )
-        return Response("successful")
-    elif request.method == "GET":
-        return Response("This is a GET and not a POST. Please contact admin")
-    else:
-        return Response("Please screenshot and contact your system admin if you are seeing this page")
 
 
 @api_view(['POST'])
