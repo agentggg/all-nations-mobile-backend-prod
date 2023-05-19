@@ -227,7 +227,7 @@ def minister_email_api_data(request):
     return Response("Please screenshot and contact your system admin if you are seeing this page con email-api")
 
 @api_view(['GET', 'POST'])
-def outreach_contact_email_api(request):
+def outreach_contact_email_api_data(request):
     # will send messages to the individual contacts
     try:
         if request.method == "POST":
