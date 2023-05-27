@@ -377,7 +377,7 @@ def outreach_registration_api_text(request):
     username = request.data.get('username', False)
     #gathers the profile first name info to save in the DB
     interactionTime = request.data.get('time', False)
-    # retrieves time from frontend, time in user local timezone
+    # retrieves time from frontend, time in user local timezone..
     userPermission = CustomUser.objects.filter(username=username, groups__name='OutreachOnly').exists()
     if userPermission == False:
         raise Http404
