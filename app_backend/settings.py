@@ -58,12 +58,7 @@ CLOUDINARY_URL={
 }
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-DEBUG = True
-
-ALLOWED_HOSTS = [
-    'nations4christ.net',
-]
-
+DEBUG = False
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
@@ -78,38 +73,28 @@ INSTALLED_APPS = [
     'django_twilio',
     'corsheaders',
     'rest_framework',
-    # 'django_custom_user_migration',
     'rest_framework.authtoken',
-    # instructions says to disable that, but that is the table. so with this 
-    # disabled, i don't know where token is suppose to go?
-    # yea one sec 
     'django_celery_beat',
-    # 'django.contrib.gis',
-    'imagekit',
-
+    'imagekit'
 ]
 
-
-CORS_ALLOWED_ORIGINS = [
-    'https://www.nations4christ.net',
-]
 #$ celery -A app_backend beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-
+ALLOWED_HOSTS = [
+    '*'
+]
 #https://www.stackhawk.com/blog/django-cors-guide/
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django_guid.middleware.guid_middleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
 ]
-
 
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = env("EMAIL_HOST")
@@ -199,10 +184,6 @@ USE_TZ = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
-STATIC_URL = '/static/'
-
-# Extra places for collectstatic to find static files.
 STATIC_URL = '/static/'
 
 # Default primary key field type
@@ -213,8 +194,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
-# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
-# STATICFILES_DIRS = [os.path.join(BASE_DIR, '../frontend', 'build', 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -228,6 +207,7 @@ CACHES = {
         }
     }
 }
+
 CORS_REPLACE_HTTPS_REFERER      = True
 HOST_SCHEME                     = "https://"
 SECURE_PROXY_SSL_HEADER         = ('HTTP_X_FORWARDED_PROTO', 'https')
