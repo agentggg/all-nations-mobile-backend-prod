@@ -17,12 +17,12 @@ from pathlib import Path
 import django_heroku
 import sentry_sdk
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
+BASE_DIR = Path(__file__).resolve().parent.parent
 from django.db.backends.mysql.base import DatabaseWrapper
 DatabaseWrapper.data_types['DateTimeField']='datetime'
 env = environ.Env()
 # reading .env file
 environ.Env.read_env()
-BASE_DIR = Path(__file__).resolve().parent.parent
 
 sentry_sdk.init(
     dsn="https://5ea09012624c444f89fc7f25f91ab844@o1420743.ingest.sentry.io/6765891",
@@ -58,36 +58,46 @@ CLOUDINARY_URL={
 }
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/3.2/howto/deployment/checklist/
-DEBUG = False
+DEBUG = True
+
+ALLOWED_HOSTS = [
+    'nations4christ.net',
+]
+
 
 INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'graphene_django',
     'app_backend_api',
     'django.contrib.auth',
     'django_extensions',
     'django_twilio',
     'corsheaders',
     'rest_framework',
+    'django_custom_user_migration',
     'rest_framework.authtoken',
     'django_celery_beat',
-    'imagekit',
+    'django_guid',
     'django.contrib.admin',
-    'baton.autodiscover',   
-    'bootstrap5',
+    'baton.autodiscover',
+    'drf_yasg',
+    'django_seed',
     'django_bootstrap5',
+    'imagekit',
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    'https://www.nations4christ.net',
+]
 #$ celery -A app_backend beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
-ALLOWED_HOSTS = [
-    '*'
-]
-#https://www.stackhawk.com/blog/django-cors-guide/
 
+#https://www.stackhawk.com/blog/django-cors-guide/
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    # 'whitenoise.middleware.WhiteNoiseMiddleware',
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -98,12 +108,13 @@ MIDDLEWARE = [
 
 ]
 
+
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_HOST_USER = 'raw2535@gmail.com'
-SERVER_EMAIL = 'smtp.gmail.com'
-EMAIL_HOST_PASSWORD = 'ylaqjtfyssmzbmcb'
+EMAIL_HOST = env("EMAIL_HOST")
+EMAIL_PORT = env("EMAIL_PORT")
+EMAIL_HOST_USER = env("email")
+SERVER_EMAIL = env("EMAIL_HOST")
+EMAIL_HOST_PASSWORD = env("pas")
 EMAIL_USE_TLS = True
 EMAIL_USE_SSL = False
 
@@ -113,10 +124,11 @@ ADMINS = [
 # send emails and debug error to admins
 
 ROOT_URLCONF = 'app_backend.urls'
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [os.path.join(BASE_DIR, 'app_backend/templates')],
+        'DIRS': [os.path.join(BASE_DIR, '../frontend', 'src')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -126,7 +138,7 @@ TEMPLATES = [
                 'django.contrib.messages.context_processors.messages',
             ],
         },
-    }
+    },
 ]
 
 CELERY_BROKER_URL = env("REDIS_HOST")
@@ -185,6 +197,10 @@ USE_TZ = True
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.9/howto/static-files/
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_URL = '/static/'
+
+# Extra places for collectstatic to find static files.
 STATIC_URL = '/static/'
 
 # Default primary key field type
@@ -195,6 +211,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
+# STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# STATICFILES_DIRS = [os.path.join(BASE_DIR, '../frontend', 'build', 'static')]
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -208,26 +226,25 @@ CACHES = {
         }
     }
 }
-
-CORS_REPLACE_HTTPS_REFERER      = False
-# HOST_SCHEME                     = "https://"
-# SECURE_PROXY_SSL_HEADER         = ('HTTP_X_FORWARDED_PROTO', 'https')
-SECURE_SSL_REDIRECT             = False
+CORS_REPLACE_HTTPS_REFERER      = True
+HOST_SCHEME                     = "https://"
+SECURE_PROXY_SSL_HEADER         = ('HTTP_X_FORWARDED_PROTO', 'https')
+SECURE_SSL_REDIRECT             = True
 # force https
-SESSION_COOKIE_SECURE           = False
+SESSION_COOKIE_SECURE           = True
 # CSRF protection prevents you from accidentally sending your session and your CSRF cookie over HTTP by accident.
-CSRF_COOKIE_SECURE              = False
+CSRF_COOKIE_SECURE              = True
 # CSRF protection prevents you from accidentally sending your session and your CSRF cookie over HTTP by accident.
-SECURE_FRAME_DENY               = False
-SECURE_BROWSER_XSS_FILTER       = False 
+SECURE_FRAME_DENY               = True
+SECURE_BROWSER_XSS_FILTER       = True 
 # Cross-site Scripting protection
-SECURE_CONTENT_TYPE_NOSNIFF     = False
+SECURE_CONTENT_TYPE_NOSNIFF     = True
 # Cross-site Scripting protection
 SECURE_HSTS_SECONDS             = 86400 
 # The above line will protect your web application from man-in-the-middle attacks and will force a connection over HTTPS.
-SECURE_HSTS_PRELOAD             = False 
+SECURE_HSTS_PRELOAD             = True 
 # The above line will protect your web application from man-in-the-middle attacks and will force a connection over HTTPS.
-SECURE_HSTS_INCLUDE_SUBDOMAINS  = False
+SECURE_HSTS_INCLUDE_SUBDOMAINS  = True
 # The above line will protect your web application from man-in-the-middle attacks and will force a connection over HTTPS.
 django_heroku.settings(locals())
 # django_heroku.settings(locals())
