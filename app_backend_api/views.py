@@ -384,7 +384,7 @@ def outreach_registration_api_text(request):
     # outreach page. Creates database entry and then signals for automated text message
     if request.method == "POST":
         email = request.data.get('email', False)
-        # retrieve data from frontend
+        # retrieve data from frontend...
         username_id_database_request = CustomUser.objects.filter(username=username).values_list('id', flat=True)
         # retrieving the username info from frontend and accessing the id number value so we can leverage it in the following SQL request
         username_database_request_integer_format = json.dumps(list(username_id_database_request)[0]).replace('"','')
