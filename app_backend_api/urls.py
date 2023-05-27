@@ -11,7 +11,7 @@ def trigger_error(request):
     # for sentry logging testing.
 
 from django.urls import path, include
- 
+
 ...
 
 schema_view = get_schema_view(
